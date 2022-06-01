@@ -58,7 +58,10 @@ def find():
         "title": 1,
         "_id": 0
     }
-    for post in client.mflix.movies.find(filter=query, projection=projection, limit=4):
+    for post in client.mflix.movies.find(
+            filter=query,
+            projection=projection,
+            limit=4):
         print(post)
 
     query = {
