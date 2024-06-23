@@ -1,0 +1,54 @@
+version: '3.8'
+services:
+  mongodb:
+  
+    # "distribuzione" MondoDB
+    image: mongodb/mongodb-community-server:5.0.26-ubuntu2004  # Based on Ubuntu 20.04
+    
+    # assegna il nome specificato al processo al posto di quello
+    # generato in modo casuale
+    container_name: mongo1
+    
+    # riavvia il processo (aka container) in caso termini inaspettatamente
+    restart: unless-stopped
+    
+    # port forward tra l'host e la porta del container
+    ports:
+      - '27017:27017'
+      
+    # variabili d'ambiente del processo containerizzato.
+    # il valore viene letto in ordine 
+    # - dal file .env 
+    # - dai valori di env var passati a docker compose
+    # - dai valori di env della macchina su cui gira docker.
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      
+    # comando di avvio
+    command: ["mongod","--config","/etc/mongod.conf"]
+    
+    
+    volumes:
+    
+      # feature del contained mongo che esegue qualsiasi script
+      # presente in /docker-entrypoint-initdb.d
+      - ./init-users.js:/docker-entrypoint-initdb.d/init-users.js
+      
+      # monta il file di conf locale nel fs del container, in modo che il processo
+      # ci possa accedere
+      - ./mongod.conf:/etc/mongod.conf
+      
+      # /data/db: directory default per salvataggio dati, contenuto memorizzato nel 
+      # volume "mongodb".
+      - mongodb:/data/db
+      
+    networks:
+      - mongo-net
+      
+volumes:
+  mongodb:
+  
+networks:
+  mongo-net:
+    driver: bridge

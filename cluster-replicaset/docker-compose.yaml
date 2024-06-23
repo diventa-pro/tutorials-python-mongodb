@@ -1,0 +1,128 @@
+version: "3.8"
+
+services:
+
+  # Nodo 1 del cluster con replica
+  mongo1:
+  
+    # Prepara una nuova immagine che abbia già a bordo 
+    # il file di chiave per permettere ai nodi di scambiarsi info.
+    build:
+      context: .
+      dockerfile: Dockerfile
+      
+    container_name: mongo1
+    
+    # --keyFile: specifica il file chiave per l’autenticazione tra i membri del replica set
+    # --replSet: nome del replica set di cui questo nodo farà parte.
+    # --bind_ip: lista di hostname e IP da cui accettare connessioni
+    command: >
+      mongod
+      --keyFile /data/pki/m103-keyfile
+      --replSet rs0
+      --bind_ip localhost,mongo1
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - 27017:27017
+      
+    volumes:
+      - "mongo1_data:/data/db"
+      
+      # I server di configurazione memorizzano i metadati per un cluster frammentato, 
+      # e /data/configdb è il percorso predefinito dove un server di configurazione 
+      # memorizza i suoi file di dati.
+      - "mongo1_config:/data/configdb"
+      
+    networks:
+      - mongo-net
+
+  mongo2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mongo2
+    command: >
+      mongod
+      --keyFile /data/pki/m103-keyfile
+      --replSet rs0
+      --bind_ip localhost,mongo2
+    ports:
+      - 27018:27017
+    volumes:
+      - "mongo2_data:/data/db"
+      - "mongo2_config:/data/configdb"
+    networks:
+      - mongo-net
+
+  mongo3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mongo3
+    command: >
+      mongod
+      --keyFile /data/pki/m103-keyfile
+      --replSet rs0
+      --bind_ip localhost,mongo3
+    ports:
+      - 27019:27017
+    volumes:
+      - "mongo3_data:/data/db"
+      - "mongo3_config:/data/configdb"
+    networks:
+      - mongo-net
+  
+  mongo4:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mongo4
+    command: >
+      mongod
+      --keyFile /data/pki/m103-keyfile
+      --replSet rs0
+      --bind_ip localhost,mongo4
+    ports:
+      - 27020:27017
+    volumes:
+      - "mongo4_data:/data/db"
+      - "mongo4_config:/data/configdb"
+    networks:
+      - mongo-net
+
+  mongosetup:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+      - mongo4
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+      
+    volumes:
+      # gli script trovati all'avvio in /docker-entrypoint-initdb.d
+      # vengono automaticamente avviati
+      - ./init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh
+      
+    networks:
+      - mongo-net
+
+volumes:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+  mongo4_data:
+  mongo1_config:
+  mongo2_config:
+  mongo3_config:
+  mongo4_config:
+
+networks:
+  mongo-net:
+    driver: bridge
