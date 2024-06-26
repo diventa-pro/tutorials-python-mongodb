@@ -2,10 +2,12 @@ Avviare docker:
 
     docker compose up -d
 
-Eseguire
+Eseguire:
 
     docker-compose exec shard01-a bash "/scripts/init-shard01.sh"
     docker-compose exec shard02-a bash "/scripts/init-shard02.sh"    
+
+Eseguire:
 
 ```bash
 docker-compose exec router01 sh -c "mongosh < /scripts/init-router.sh"
@@ -22,6 +24,9 @@ docker-compose exec shard02-a bash "/scripts/auth.sh"
 docker-compose exec router01 mongosh --port 27017 -u "root" --authenticationDatabase admin
 ```
 pwd: root
+
+
+Eseguire:
 
 ```
 // Enable sharding for database `MyDatabase`
@@ -50,4 +55,16 @@ db.MyCollection.insertMany([
 { oemNumber: "EEEEEEE", zipCode: 11111, supplierId: "695d786c-3254-477d-a9af-9b628cec51e5" },
 { oemNumber: "AAAAAAA", zipCode: 11111, supplierId: "a589e2e1-6206-43a4-a948-617f3e26524d" }
 ]);
+```
+
+Per verificare la distribuzione tra gli shard:
+
+```
+use admin
+
+db.auth("root", "root")
+
+sh.status() --> Questo comando fornisce una panoramica della configurazione dello sharding e della distribuzione dei chunks.
+
+db.runCommand( { getShardDistribution: "nome_collezione" } ) --> Questo comando mostra una distribuzione dettagliata dei dati per una collezione specifica.
 ```
